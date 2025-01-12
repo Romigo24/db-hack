@@ -1,11 +1,10 @@
 def fix_marks(schoolkid):
-    bad_grades = Mark.objects.filter(schoolkid=schoolkid, points__in=[2, 3])
-    for grade in bad_grades:
-        grade.points = 5
-        grade.save()
+    get_schoolkid_name(schoolkid)
+    bad_grades = Mark.objects.filter(schoolkid=schoolkid, points__in=[2, 3]).update(points=5)
 
 
 def remove_chastisements(schoolkid):
+    get_schoolkid_name(schoolkid)
     comments = Chastisement.objects.filter(schoolkid=schoolkid)
     comments.delete()
 
@@ -20,10 +19,18 @@ def get_schoolkid_name(schoolkid_name):
         print(f"Ученик с именем '{schoolkid_name}' не найден.")
         return None
 
+def get_subject_name_and_year(subject_name, year_of_study):
+    subject = Subject.objects.get(title=subject_name, year_of_study=year_of_study)
+    return subject
+
+
+
 def create_commendation(schoolkid_name, subject_name):
-    schoolkid = Schoolkid.objects.filter(full_name__contains=schoolkid_name).first()
-    subject_name = Subject.objects.get(title=subject_name, year_of_study=6)
-    lesson = Lesson.objects.filter(subject=subject_name, year_of_study=6, group_letter='А').order_by('-date').first()
+    schoolkid = get_schoolkid_name(schoolkid_name)
+    subject_name = get_subject_name_and_year(subject_name, schoolkid.year_of_study)
+    lesson = Lesson.objects.filter(subject=subject_name, year_of_study=schoolkid.year_of_study, group_letter=schoolkid.group_letter).order_by('-date').first()
+    if not lesson:
+        print(f'Нет уроков по предмету {subject_name} для {schoolkid.year_of_study}{schoolkid.group_letter}')
     subject = lesson.subject
     teacher = lesson.teacher
     date = lesson.date
